@@ -1,0 +1,49 @@
+package com.demo.client.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+public class Course {
+  private final UUID id;
+  private String code;
+  private String name;
+  private final List<DemoSlot> slots = new ArrayList<>();
+
+  public Course(UUID id, String code, String name) {
+    this.id = id;
+    this.code = code;
+    this.name = name;
+  }
+
+  public UUID getId() {
+    return id;
+  }
+
+  public String getCode() {
+    return code;
+  }
+
+  public void setCode(String code) {
+    this.code = code;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public List<DemoSlot> getSlots() {
+    return slots;
+  }
+
+  public String displayName() {
+    if (code == null || code.isBlank()) return name;
+    if (name == null || name.isBlank()) return code;
+    return code + " — " + name;
+  }
+}
+
