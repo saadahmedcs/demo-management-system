@@ -58,4 +58,3 @@ H2 console: `http://localhost:8080/h2`
 ## Sprint 1 features
 - **Course tabs**: create course tabs so each course’s demos/slots live together.
 - **Automated slot generation**: generate time slots by date range, days of week, working hours, slot length, and breaks.
-
