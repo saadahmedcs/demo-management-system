@@ -6,5 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DemoSlotRepository extends JpaRepository<DemoSlot, UUID> {
   List<DemoSlot> findByCourseIdOrderByDateAscStartTimeAsc(UUID courseId);
+  boolean existsByCourseIdAndStudentEmail(UUID courseId, String studentEmail);
 }
 

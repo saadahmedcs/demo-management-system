@@ -51,6 +51,8 @@ public class DemoSlotService {
         .orElseThrow(() -> new IllegalArgumentException("Slot not found."));
     if (slot.getStudentEmail() != null)
       throw new IllegalArgumentException("Slot already booked.");
+    if (repo.existsByCourseIdAndStudentEmail(courseId, studentEmail))
+      throw new IllegalArgumentException("You already have a booked slot in this course.");
     slot.setStudentEmail(studentEmail);
     return toDto(slot);
   }

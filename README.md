@@ -58,3 +58,9 @@ H2 console: `http://localhost:8080/h2`
 ## Sprint 1 features
 - **Course tabs**: create course tabs so each course’s demos/slots live together.
 - **Automated slot generation**: generate time slots by date range, days of week, working hours, slot length, and breaks.
+
+## Sprint 2 features
+- **Role-locked login**: an email registered as Student cannot log in as TA and vice versa; enforced by the backend.
+- **Slot booking**: students browse TA-created demo slots and self-book one slot per course; bookings are reflected immediately on the TA side.
+- **Timetable integration**: students select their fixed class periods (6 time blocks, Mon–Fri) on a grid; demo slots that clash with a class period are automatically disabled.
+- **Messaging**: per-course chat between the student and the course TA, with messages polling every 3 seconds.

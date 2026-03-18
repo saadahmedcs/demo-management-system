@@ -230,6 +230,8 @@ public class StudentView {
         var slot = getTableView().getItems().get(getIndex());
         btn.getStyleClass().removeAll("btn-primary", "btn-danger", "btn-ghost", "btn-warning");
 
+        boolean alreadyBooked = slots.stream().anyMatch(s -> email.equals(s.getStudentEmail()));
+
         if (email.equals(slot.getStudentEmail())) {
           btn.setText("Unbook");
           btn.getStyleClass().add("btn-danger");
@@ -241,6 +243,10 @@ public class StudentView {
         } else if (hasClash(slot)) {
           btn.setText("Clash");
           btn.getStyleClass().add("btn-ghost");
+          btn.setDisable(true);
+        } else if (alreadyBooked) {
+          btn.setText("Book");
+          btn.getStyleClass().add("btn-primary");
           btn.setDisable(true);
         } else {
           btn.setText("Book");
