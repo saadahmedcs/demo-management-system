@@ -29,14 +29,17 @@ public class CourseTabView extends BorderPane {
 
   private final BackendApiClient api;
   private final Course course;
+  private final String email;
   private final ObservableList<DemoSlot> slots;
   private final TableView<DemoSlot> table = new TableView<>();
   private final Label subtitle = new Label();
   private final java.util.function.Consumer<String> onTabNameChanged;
 
-  public CourseTabView(BackendApiClient api, Course course, java.util.function.Consumer<String> onTabNameChanged) {
+  public CourseTabView(BackendApiClient api, Course course, String email,
+      java.util.function.Consumer<String> onTabNameChanged) {
     this.api = api;
     this.course = course;
+    this.email = email;
     this.onTabNameChanged = onTabNameChanged;
     this.slots = FXCollections.observableArrayList(course.getSlots());
 
@@ -69,6 +72,11 @@ public class CourseTabView extends BorderPane {
     rename.setTooltip(new Tooltip("Update course tab name"));
     rename.setOnAction(e -> onRename(title));
 
+    var messages = new Button("Messages");
+    messages.getStyleClass().addAll("btn", "btn-ghost");
+    messages.setTooltip(new Tooltip("Open course messages"));
+    messages.setOnAction(e -> new ChatDialog(api, course, email).show());
+
     var generate = new Button("Generate slots");
     generate.getStyleClass().addAll("btn", "btn-primary");
     generate.setTooltip(new Tooltip("Automatically create demo slots"));
@@ -82,7 +90,7 @@ public class CourseTabView extends BorderPane {
     Region spacer = new Region();
     HBox.setHgrow(spacer, Priority.ALWAYS);
 
-    wrap.getChildren().addAll(titleWrap, spacer, rename, generate, clear);
+    wrap.getChildren().addAll(titleWrap, spacer, rename, messages, generate, clear);
     return wrap;
   }
 
@@ -94,23 +102,28 @@ public class CourseTabView extends BorderPane {
     var dateCol = new TableColumn<DemoSlot, java.time.LocalDate>("Date");
     dateCol.setCellValueFactory(new PropertyValueFactory<>("date"));
     dateCol.setCellFactory(col -> new PrettyCell<>(d -> d == null ? "" : DATE_FMT.format(d)));
-    dateCol.setMinWidth(240);
+    dateCol.setMinWidth(200);
 
     var startCol = new TableColumn<DemoSlot, java.time.LocalTime>("Start");
     startCol.setCellValueFactory(new PropertyValueFactory<>("startTime"));
     startCol.setCellFactory(col -> new PrettyCell<>(t -> t == null ? "" : TIME_FMT.format(t)));
-    startCol.setMinWidth(120);
+    startCol.setMinWidth(100);
 
     var endCol = new TableColumn<DemoSlot, java.time.LocalTime>("End");
     endCol.setCellValueFactory(new PropertyValueFactory<>("endTime"));
     endCol.setCellFactory(col -> new PrettyCell<>(t -> t == null ? "" : TIME_FMT.format(t)));
-    endCol.setMinWidth(120);
+    endCol.setMinWidth(100);
 
     var noteCol = new TableColumn<DemoSlot, String>("Note");
     noteCol.setCellValueFactory(new PropertyValueFactory<>("note"));
-    noteCol.setMinWidth(260);
+    noteCol.setMinWidth(200);
 
-    table.getColumns().setAll(dateCol, startCol, endCol, noteCol);
+    var studentCol = new TableColumn<DemoSlot, String>("Student");
+    studentCol.setCellValueFactory(new PropertyValueFactory<>("studentEmail"));
+    studentCol.setCellFactory(col -> new PrettyCell<>(s -> s == null ? "Available" : s));
+    studentCol.setMinWidth(200);
+
+    table.getColumns().setAll(dateCol, startCol, endCol, noteCol, studentCol);
 
     var container = new BorderPane(table);
     container.getStyleClass().add("table-card");
@@ -156,7 +169,7 @@ public class CourseTabView extends BorderPane {
                         req.slotMinutes(),
                         req.breakMinutes()));
             return dtos.stream()
-                .map(s -> new DemoSlot(s.id(), s.date(), s.startTime(), s.endTime(), s.note()))
+                .map(s -> new DemoSlot(s.id(), s.date(), s.startTime(), s.endTime(), s.note(), s.studentEmail()))
                 .toList();
           }
         };
@@ -186,7 +199,7 @@ public class CourseTabView extends BorderPane {
           protected java.util.List<DemoSlot> call() throws Exception {
             var dtos = api.listSlots(course.getId());
             return dtos.stream()
-                .map(s -> new DemoSlot(s.id(), s.date(), s.startTime(), s.endTime(), s.note()))
+                .map(s -> new DemoSlot(s.id(), s.date(), s.startTime(), s.endTime(), s.note(), s.studentEmail()))
                 .toList();
           }
         };
@@ -209,7 +222,7 @@ public class CourseTabView extends BorderPane {
       subtitle.setText("No slots yet — generate slots to save time.");
       return;
     }
-    subtitle.setText(slots.size() + " slots");
+    long booked = slots.stream().filter(s -> s.getStudentEmail() != null).count();
+    subtitle.setText(slots.size() + " slots  •  " + booked + " booked");
   }
 }
-

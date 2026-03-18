@@ -36,6 +36,9 @@ public class DemoSlot {
   @Column(nullable = true, length = 2000)
   private String note;
 
+  @Column(nullable = true, length = 200)
+  private String studentEmail;
+
   public DemoSlot(Course course, LocalDate date, LocalTime startTime, LocalTime endTime, String note) {
     this.course = course;
     this.date = date;

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CourseController {
   private final CourseService service;
 
-  public record CreateCourseRequest(String code, @NotBlank String name) {}
+  public record CreateCourseRequest(String code, @NotBlank String name, String taEmail) {}
 
   @GetMapping
   public List<CourseDto> list() {
@@ -30,7 +30,7 @@ public class CourseController {
   @PostMapping
   public CourseDto create(@RequestBody CreateCourseRequest req) {
     if (req == null) throw new IllegalArgumentException("Missing request body.");
-    return service.create(req.code(), req.name());
+    return service.create(req.code(), req.name(), req.taEmail());
   }
 }
 

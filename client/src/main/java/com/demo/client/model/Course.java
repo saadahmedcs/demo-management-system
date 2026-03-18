@@ -8,12 +8,18 @@ public class Course {
   private final UUID id;
   private String code;
   private String name;
+  private String taEmail;
   private final List<DemoSlot> slots = new ArrayList<>();
 
   public Course(UUID id, String code, String name) {
+    this(id, code, name, null);
+  }
+
+  public Course(UUID id, String code, String name, String taEmail) {
     this.id = id;
     this.code = code;
     this.name = name;
+    this.taEmail = taEmail;
   }
 
   public UUID getId() {
@@ -34,6 +40,10 @@ public class Course {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public String getTaEmail() {
+    return taEmail;
   }
 
   public List<DemoSlot> getSlots() {

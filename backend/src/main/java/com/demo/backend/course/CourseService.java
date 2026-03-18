@@ -18,8 +18,8 @@ public class CourseService {
   }
 
   @Transactional
-  public CourseDto create(String code, String name) {
-    var course = new Course(code, name);
+  public CourseDto create(String code, String name, String taEmail) {
+    var course = new Course(code, name, taEmail);
     repo.save(course);
     return toDto(course);
   }
@@ -30,7 +30,7 @@ public class CourseService {
   }
 
   static CourseDto toDto(Course c) {
-    return new CourseDto(c.getId(), c.getCode(), c.getName());
+    return new CourseDto(c.getId(), c.getCode(), c.getName(), c.getTaEmail());
   }
 }
 

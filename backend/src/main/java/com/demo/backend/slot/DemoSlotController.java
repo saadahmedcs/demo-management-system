@@ -1,5 +1,6 @@
 package com.demo.backend.slot;
 
+import com.demo.backend.slot.dto.BookSlotRequest;
 import com.demo.backend.slot.dto.DemoSlotDto;
 import com.demo.backend.slot.dto.GenerateSlotsRequest;
 import jakarta.validation.Valid;
@@ -37,5 +38,16 @@ public class DemoSlotController {
   public void clear(@PathVariable UUID courseId) {
     service.clearCourse(courseId);
   }
-}
 
+  @PostMapping("/{slotId}/book")
+  public DemoSlotDto book(@PathVariable UUID courseId, @PathVariable UUID slotId,
+      @RequestBody BookSlotRequest req) {
+    return service.bookSlot(courseId, slotId, req.studentEmail());
+  }
+
+  @PostMapping("/{slotId}/unbook")
+  public DemoSlotDto unbook(@PathVariable UUID courseId, @PathVariable UUID slotId,
+      @RequestBody BookSlotRequest req) {
+    return service.unbookSlot(courseId, slotId, req.studentEmail());
+  }
+}

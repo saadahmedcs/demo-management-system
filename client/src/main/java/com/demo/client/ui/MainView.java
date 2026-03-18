@@ -23,8 +23,12 @@ public class MainView {
   private final BorderPane root = new BorderPane();
   private final TabPane tabPane = new TabPane();
   private final BackendApiClient api = new BackendApiClient(URI.create("http://localhost:8080"));
+  private final String email;
+  private final Runnable onLogout;
 
-  public MainView() {
+  public MainView(String email, Runnable onLogout) {
+    this.email = email;
+    this.onLogout = onLogout;
     root.getStyleClass().add("app-root");
     root.setTop(buildTopBar());
     root.setCenter(tabPane);
@@ -59,7 +63,14 @@ public class MainView {
     addCourse.setTooltip(new Tooltip("Create a new course tab"));
     addCourse.setOnAction(evt -> onAddCourse());
 
-    bar.getChildren().addAll(title, spacer, addCourse);
+    var emailLabel = new Label(email);
+    emailLabel.getStyleClass().add("topbar-email");
+
+    var logoutBtn = new Button("Log out");
+    logoutBtn.getStyleClass().addAll("btn", "btn-ghost");
+    logoutBtn.setOnAction(evt -> onLogout.run());
+
+    bar.getChildren().addAll(title, spacer, emailLabel, addCourse, logoutBtn);
     return bar;
   }
 
@@ -81,8 +92,8 @@ public class MainView {
         new Task<Course>() {
           @Override
           protected Course call() throws Exception {
-            var dto = api.createCourse(new CreateCourseRequest(draft.codeTrimmed(), draft.nameTrimmed()));
-            return new Course(dto.id(), dto.code(), dto.name());
+            var dto = api.createCourse(new CreateCourseRequest(draft.codeTrimmed(), draft.nameTrimmed(), email));
+            return new Course(dto.id(), dto.code(), dto.name(), dto.taEmail());
           }
         };
 
@@ -96,7 +107,7 @@ public class MainView {
         new Task<java.util.List<Course>>() {
           @Override
           protected java.util.List<Course> call() throws Exception {
-            return api.listCourses().stream().map(c -> new Course(c.id(), c.code(), c.name())).toList();
+            return api.listCourses().stream().map(c -> new Course(c.id(), c.code(), c.name(), c.taEmail())).toList();
           }
         };
     task.setOnSucceeded(e -> Platform.runLater(() -> {
@@ -118,7 +129,7 @@ public class MainView {
 
     var courseTab = new Tab(course.displayName());
     courseTab.setClosable(true);
-    courseTab.setContent(new CourseTabView(api, course, updatedName -> courseTab.setText(updatedName)));
+    courseTab.setContent(new CourseTabView(api, course, email, updatedName -> courseTab.setText(updatedName)));
     tabPane.getTabs().add(courseTab);
     tabPane.getSelectionModel().select(courseTab);
   }

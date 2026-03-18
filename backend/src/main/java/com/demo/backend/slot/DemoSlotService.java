@@ -45,6 +45,28 @@ public class DemoSlotService {
   }
 
   @Transactional
+  public DemoSlotDto bookSlot(UUID courseId, UUID slotId, String studentEmail) {
+    var slot = repo.findById(slotId)
+        .filter(s -> courseId.equals(s.getCourse().getId()))
+        .orElseThrow(() -> new IllegalArgumentException("Slot not found."));
+    if (slot.getStudentEmail() != null)
+      throw new IllegalArgumentException("Slot already booked.");
+    slot.setStudentEmail(studentEmail);
+    return toDto(slot);
+  }
+
+  @Transactional
+  public DemoSlotDto unbookSlot(UUID courseId, UUID slotId, String studentEmail) {
+    var slot = repo.findById(slotId)
+        .filter(s -> courseId.equals(s.getCourse().getId()))
+        .orElseThrow(() -> new IllegalArgumentException("Slot not found."));
+    if (!studentEmail.equals(slot.getStudentEmail()))
+      throw new IllegalArgumentException("You did not book this slot.");
+    slot.setStudentEmail(null);
+    return toDto(slot);
+  }
+
+  @Transactional
   public void clearCourse(UUID courseId) {
     var existing = repo.findByCourseIdOrderByDateAscStartTimeAsc(courseId);
     repo.deleteAllInBatch(existing);
@@ -57,7 +79,8 @@ public class DemoSlotService {
         s.getDate(),
         s.getStartTime(),
         s.getEndTime(),
-        s.getNote());
+        s.getNote(),
+        s.getStudentEmail());
   }
 }
 

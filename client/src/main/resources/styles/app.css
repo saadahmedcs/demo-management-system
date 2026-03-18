@@ -117,3 +117,53 @@
   -fx-text-fill: rgba(229, 231, 235, 0.9);
 }
 
+.login-bg {
+  -fx-background-color: linear-gradient(to bottom, #0b1220, #070b14);
+}
+
+.login-card {
+  -fx-background-color: rgba(255, 255, 255, 0.05);
+  -fx-background-radius: 18;
+  -fx-border-color: rgba(255, 255, 255, 0.08);
+  -fx-border-radius: 18;
+  -fx-border-width: 1;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 32, 0, 0, 8);
+}
+
+.field-label {
+  -fx-text-fill: rgba(229, 231, 235, 0.75);
+  -fx-font-size: 12px;
+  -fx-font-weight: 600;
+}
+
+.login-field {
+  -fx-background-color: rgba(255, 255, 255, 0.07);
+  -fx-background-radius: 8;
+  -fx-border-color: rgba(255, 255, 255, 0.12);
+  -fx-border-radius: 8;
+  -fx-border-width: 1;
+  -fx-text-fill: #e5e7eb;
+  -fx-prompt-text-fill: rgba(229, 231, 235, 0.35);
+  -fx-padding: 10 12 10 12;
+  -fx-font-size: 14px;
+}
+
+.login-field:focused {
+  -fx-border-color: #38bdf8;
+}
+
+.login-radio {
+  -fx-text-fill: rgba(229, 231, 235, 0.9);
+  -fx-font-size: 13px;
+}
+
+.login-error {
+  -fx-text-fill: #f87171;
+  -fx-font-size: 12px;
+}
+
+.topbar-email {
+  -fx-text-fill: rgba(229, 231, 235, 0.6);
+  -fx-font-size: 13px;
+}
+

@@ -27,12 +27,16 @@ public class Course {
 
   @Column(nullable = true) private String code;
 
+  @Column(nullable = true, length = 200)
+  private String taEmail;
+
   @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   private List<DemoSlot> slots = new ArrayList<>();
 
-  public Course(String code, String name) {
+  public Course(String code, String name, String taEmail) {
     this.code = code;
     this.name = name;
+    this.taEmail = taEmail;
   }
 }
 
