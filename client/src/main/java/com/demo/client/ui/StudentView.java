@@ -11,8 +11,8 @@ import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
@@ -230,7 +230,7 @@ public class StudentView {
     endCol.setMinWidth(80);
 
     var actionCol = new TableColumn<DemoSlot, Void>("Action");
-    actionCol.setMinWidth(120);
+    actionCol.setMinWidth(160);
     actionCol.setCellFactory(col -> new TableCell<>() {
       private final Button btn = new Button();
 
@@ -261,7 +261,8 @@ public class StudentView {
           btn.getStyleClass().add("btn-danger");
           btn.setDisable(false);
         } else if (slot.getStudentEmail() != null) {
-          btn.setText("Taken");
+          var roll = slot.getStudentRollNumber();
+          btn.setText(roll != null && !roll.isBlank() ? roll : "Booked");
           btn.getStyleClass().add("btn-ghost");
           btn.setDisable(true);
         } else if (hasClash(slot)) {
@@ -399,7 +400,7 @@ public class StudentView {
             dto.groupMemberRollNumbers());
       }
     };
-    task.setOnSucceeded(e -> { replaceSlot(slot, task.getValue()); refreshSlotCount(); });
+    task.setOnSucceeded(e -> reloadSlotsForSelectedCourse());
     task.setOnFailed(e -> FxAsync.showError("Book slot failed", task.getException()));
     FxAsync.run(task);
   }
@@ -423,38 +424,67 @@ public class StudentView {
             dto.groupMemberRollNumbers());
       }
     };
-    task.setOnSucceeded(e -> { replaceSlot(slot, task.getValue()); refreshSlotCount(); });
+    task.setOnSucceeded(e -> reloadSlotsForSelectedCourse());
     task.setOnFailed(e -> FxAsync.showError("Unbook slot failed", task.getException()));
     FxAsync.run(task);
   }
 
-  private List<String> collectGroupRollNumbers(DemoSlot slot) {
-    int expected = slot.getGroupMemberCount() == null || slot.getGroupMemberCount() < 1 ? 1 : slot.getGroupMemberCount();
-    if (expected <= 1) return List.of();
-    var dialog = new javafx.scene.control.TextInputDialog();
-    dialog.setTitle("Group Roll Numbers");
-    dialog.setHeaderText("This slot is group-based (" + expected + " members).");
-    dialog.setContentText("Enter all " + expected + " roll numbers (comma-separated):");
-    var res = dialog.showAndWait();
-    if (res.isEmpty()) return null;
-    var values =
-        Arrays.stream(res.get().split(","))
-            .map(String::trim)
-            .filter(v -> !v.isBlank())
-            .distinct()
+  private void reloadSlotsForSelectedCourse() {
+    if (selectedCourse == null) return;
+    var task = new Task<List<DemoSlot>>() {
+      @Override
+      protected List<DemoSlot> call() throws Exception {
+        return api.listSlots(selectedCourse.getId()).stream()
+            .map(
+                s ->
+                    new DemoSlot(
+                        s.id(),
+                        s.date(),
+                        s.startTime(),
+                        s.endTime(),
+                        s.note(),
+                        s.assignmentName(),
+                        s.studentEmail(),
+                        s.studentRollNumber(),
+                        s.studentSection(),
+                        s.groupMemberCount(),
+                        s.groupMemberRollNumbers()))
             .toList();
-    if (values.size() != expected) {
-      FxAsync.showError(
-          "Group members required",
-          new IllegalArgumentException("Please enter exactly " + expected + " roll numbers."));
-      return null;
-    }
-    return values;
+      }
+    };
+    task.setOnSucceeded(
+        e -> {
+          slots.setAll(task.getValue());
+          refreshSlotCount();
+          slotTable.refresh();
+        });
+    task.setOnFailed(e -> FxAsync.showError("Load slots failed", task.getException()));
+    FxAsync.run(task);
   }
 
-  private void replaceSlot(DemoSlot old, DemoSlot updated) {
-    int idx = slots.indexOf(old);
-    if (idx >= 0) slots.set(idx, updated);
+  private List<String> collectGroupRollNumbers(DemoSlot slot) {
+    int g = slot.getGroupMemberCount() == null || slot.getGroupMemberCount() < 1 ? 1 : slot.getGroupMemberCount();
+    if (g <= 1) return List.of();
+    int vacant = countVacantSameTimeslot(slot);
+    if (vacant <= 1) return List.of();
+    return GroupRollNumbersDialog.show(vacant, selectedCourse.displayName()).orElse(null);
+  }
+
+  private int countVacantSameTimeslot(DemoSlot clicked) {
+    return (int)
+        slots.stream()
+            .filter(s -> sameTimeslotWindow(s, clicked))
+            .filter(s -> s.getStudentEmail() == null)
+            .count();
+  }
+
+  private static boolean sameTimeslotWindow(DemoSlot a, DemoSlot b) {
+    String an = a.getAssignmentName() == null || a.getAssignmentName().isBlank() ? "General" : a.getAssignmentName();
+    String bn = b.getAssignmentName() == null || b.getAssignmentName().isBlank() ? "General" : b.getAssignmentName();
+    return Objects.equals(a.getDate(), b.getDate())
+        && Objects.equals(a.getStartTime(), b.getStartTime())
+        && Objects.equals(a.getEndTime(), b.getEndTime())
+        && Objects.equals(an, bn);
   }
 
   private void refreshSlotCount() {
