@@ -5,6 +5,7 @@ import com.demo.backend.slot.dto.DemoSlotDto;
 import com.demo.backend.slot.dto.GenerateSlotsRequest;
 import com.demo.backend.user.AppUserRepository;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,10 @@ public class DemoSlotService {
   @Transactional
   public List<DemoSlotDto> generateForCourse(UUID courseId, GenerateSlotsRequest req) {
     var course = courses.getEntity(courseId);
+    int configuredSize =
+        Boolean.TRUE.equals(req.groupAssignment())
+            ? (req.groupMemberCount() == null || req.groupMemberCount() < 1 ? 2 : req.groupMemberCount())
+            : 1;
 
     var specs =
         SlotGenerator.generate(
@@ -37,26 +42,22 @@ public class DemoSlotService {
             Duration.ofMinutes(req.slotMinutes()),
             Duration.ofMinutes(req.breakMinutes()));
 
-    var toSave =
-        specs.stream()
-            .map(
-                s -> {
-                  var slot =
-                      new DemoSlot(
-                        course,
-                        s.date(),
-                        s.startTime(),
-                        s.endTime(),
-                        null,
-                        req.assignmentName());
-                  int configuredSize =
-                      Boolean.TRUE.equals(req.groupAssignment())
-                          ? (req.groupMemberCount() == null || req.groupMemberCount() < 1 ? 2 : req.groupMemberCount())
-                          : 1;
-                  slot.setGroupMemberCount(configuredSize);
-                  return slot;
-                })
-            .toList();
+    var toSave = new ArrayList<DemoSlot>();
+    int slotsPerWindow = Boolean.TRUE.equals(req.groupAssignment()) ? configuredSize : 1;
+    for (var s : specs) {
+      for (int i = 0; i < slotsPerWindow; i++) {
+        var slot =
+            new DemoSlot(
+                course,
+                s.date(),
+                s.startTime(),
+                s.endTime(),
+                null,
+                req.assignmentName());
+        slot.setGroupMemberCount(configuredSize);
+        toSave.add(slot);
+      }
+    }
 
     repo.saveAll(toSave);
     return listForCourse(courseId);
