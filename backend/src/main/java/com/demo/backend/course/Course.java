@@ -6,6 +6,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
@@ -36,7 +37,8 @@ public class Course {
   @Column(nullable = true, length = 300)
   private String venue;
 
-  @Column(name = "rubric_content", columnDefinition = "BYTEA")
+  @Lob
+  @Column(name = "rubric_content")
   private byte[] rubricContent;
 
   @Column(nullable = true, length = 255)

@@ -1,6 +1,6 @@
 # Demo Management System
 
-Tech stack: **Spring Boot** (backend) + **JavaFX** (desktop client), built with the **Maven Wrapper**. The backend uses **JPA** with a JDBC database; default configuration targets **PostgreSQL** (see `backend/src/main/resources/application.properties`). User passwords are stored as **SHA-256** hashes.
+Tech stack: **Spring Boot** (backend) + **JavaFX** (desktop client), built with the **Maven Wrapper**. The backend uses **JPA** with a JDBC database and supports both **MySQL** and **PostgreSQL** via Spring profiles (see `backend/src/main/resources/application.properties`). User passwords are stored as **SHA-256** hashes.
 
 The desktop client talks to the API at **`http://localhost:8080`** (see `LoginView`, `MainView`, `StudentView`).
 
@@ -17,16 +17,20 @@ Recent feature and doc changes are listed in **[CHANGELOG.md](CHANGELOG.md)**.
 
 ## Choose a database
 
-The backend reads **`DB_URL`**, **`DB_USER`**, and **`DB_PASS`** (see `application.properties`). If you do not set them, it uses the **PostgreSQL** defaults defined there (`localhost:5432`, etc.).
+The backend reads **`DB_PROFILE`**, **`DB_URL`**, **`DB_USER`**, and **`DB_PASS`**.
+
+- `DB_PROFILE=mysql` (default) loads `application-mysql.properties`
+- `DB_PROFILE=postgres` loads `application-postgres.properties`
+- `DB_URL` / `DB_USER` / `DB_PASS` can override either profile
 
 | Approach | When to use |
 |----------|-------------|
-| **H2 (file)** | Fastest local run; no PostgreSQL install. Data is stored in a file under the backend working directory. |
-| **PostgreSQL** | Matches team defaults; use for shared or production-like setups. |
+| **MySQL** | Default local profile (`DB_PROFILE=mysql`), easy local setup. |
+| **PostgreSQL** | Use when your environment or team setup prefers Postgres. |
 
 ---
 
-## Quick start: H2 (no PostgreSQL)
+## Quick start: MySQL (default)
 
 From the **project root** (folder that contains `pom.xml` and `mvnw.cmd`).
 
@@ -34,12 +38,6 @@ From the **project root** (folder that contains `pom.xml` and `mvnw.cmd`).
 
 ```powershell
 cd "c:\path\to\demo-management-system-main"
-
-$env:DB_URL = "jdbc:h2:file:./demomanagement_db_run;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1"
-$env:DB_USER = "sa"
-$env:DB_PASS = ""
-$env:SPRING_JPA_DATABASE_PLATFORM = "org.hibernate.dialect.H2Dialect"
-
 .\mvnw.cmd -pl backend spring-boot:run
 ```
 
@@ -52,26 +50,32 @@ cd "c:\path\to\demo-management-system-main"
 .\mvnw.cmd -pl client javafx:run
 ```
 
-The **H2 file** (`demomanagement_db_run` + suffix) is created in the **`backend`** directory (that is the JVM working directory for `spring-boot:run`). Only one backend instance should use the same file; if you see a **file locked** error, stop other Java processes using that database or change the file name in `DB_URL`.
+If your MySQL credentials differ from defaults, set them in the same terminal:
+
+```powershell
+$env:DB_URL = "jdbc:mysql://localhost:3306/demomanagement_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+$env:DB_USER = "root"
+$env:DB_PASS = "your_password_here"
+.\mvnw.cmd -pl backend spring-boot:run
+```
 
 ---
 
 ## Run with PostgreSQL
 
 1. Install and start **PostgreSQL**, and create a database (e.g. `demomanagement_db`) if it does not exist.
-2. Set credentials to match your server (same terminal session as `spring-boot:run`):
+2. Select the PostgreSQL profile and set credentials to match your server (same terminal session as `spring-boot:run`):
 
 ```powershell
 cd "c:\path\to\demo-management-system-main"
 
+$env:DB_PROFILE = "postgres"
 $env:DB_URL = "jdbc:postgresql://localhost:5432/demomanagement_db"
 $env:DB_USER = "postgres"
 $env:DB_PASS = "your_password_here"
 
 .\mvnw.cmd -pl backend spring-boot:run
 ```
-
-Unset `SPRING_JPA_DATABASE_PLATFORM` if you previously used H2, so Hibernate uses the **PostgreSQL** dialect from `application.properties`.
 
 **Optional — PostgreSQL in Docker**
 
@@ -89,10 +93,17 @@ Use `./mvnw` instead of `.\mvnw.cmd`, and `export` env vars:
 
 ```bash
 cd /path/to/demo-management-system-main
-export DB_URL="jdbc:h2:file:./demomanagement_db_run;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1"
-export DB_USER="sa"
-export DB_PASS=""
-export SPRING_JPA_DATABASE_PLATFORM="org.hibernate.dialect.H2Dialect"
+# MySQL (default profile)
+./mvnw -pl backend spring-boot:run
+```
+
+For PostgreSQL:
+
+```bash
+export DB_PROFILE="postgres"
+export DB_URL="jdbc:postgresql://localhost:5432/demomanagement_db"
+export DB_USER="postgres"
+export DB_PASS="your_password_here"
 ./mvnw -pl backend spring-boot:run
 ```
 
@@ -120,8 +131,7 @@ Stop either process with **Ctrl+C** in its terminal.
 | Issue | What to do |
 |-------|------------|
 | **Port 8080 already in use** | Stop the other process, or change `server.port` in `backend/src/main/resources/application.properties`. |
-| **Backend: database connection failed** | For PostgreSQL: ensure the service is up and `DB_URL` / `DB_USER` / `DB_PASS` are correct. For H2: ensure `SPRING_JPA_DATABASE_PLATFORM` is `org.hibernate.dialect.H2Dialect`. |
-| **H2 file locked** | Another JVM still has the database open. Stop old backend processes or use a new file name in `DB_URL`. |
+| **Backend: database connection failed** | Verify selected profile (`DB_PROFILE=mysql` or `DB_PROFILE=postgres`), ensure the DB service is up, and check `DB_URL` / `DB_USER` / `DB_PASS`. |
 | **Client errors / empty data** | Start the backend **before** the client; confirm `http://localhost:8080` responds. |
 | **First run slow** | Maven Wrapper downloads dependencies once; later runs are faster. |
 
